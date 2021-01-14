@@ -14,13 +14,16 @@ Listing the contents (solids) of a STEP file:
 `STEPToMesh -c -i <step file>`
 
 Converting the overall file content (solids) into a mesh:
+
 `STEPToMesh -i <step file> -o <output file> -l <linear deflection> -a <angular deflection>`
+
 The parameters `<linear deflection>` and `<angular deflection>` control the resolution of the triangulation as described in https://dev.opencascade.org/doc/overview/html/occt_user_guides__mesh.html#occt_modalg_11_2.
 
 Converting selected solids of the file into a mesh:
+
 `STEPToMesh -i <step file> -o <output file> -l <linear deflection> -a <angular deflection> -s <solid1>,<solid2>,<...>`
 
-In order to change the default output format binary STL to ASCII STL the command line argument `-f ascii_stl`has to be specified.
+In order to change the default output format binary STL to ASCII STL the command line argument `-f stl_ascii`has to be specified.
 
 Following the help text from the command line:
 ```
