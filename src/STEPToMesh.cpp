@@ -75,15 +75,14 @@ void getNamedSolids(const TopLoc_Location& location, const std::string& prefix, 
 	}
 }
 
-auto read(const std::string& inFile, std::vector<NamedSolid>& namedSolids) -> bool {
+void read(const std::string& inFile, std::vector<NamedSolid>& namedSolids) {
 	Handle(TDocStd_Document) document;
 	Handle(XCAFApp_Application) application = XCAFApp_Application::GetApplication();
 	application->NewDocument(inFile.c_str(), document);
 	STEPCAFControl_Reader reader;
 	reader.SetNameMode(true);
 	IFSelect_ReturnStatus stat = reader.ReadFile(inFile.c_str());
-	if (stat != IFSelect_RetDone) return false;
-	if (!reader.Transfer(document)) return false;
+	if (stat != IFSelect_RetDone || !reader.Transfer(document)) throw std::logic_error{std::string{"Could not read '"} + inFile + "'"};
 	Handle(XCAFDoc_ShapeTool) shapeTool = XCAFDoc_DocumentTool::ShapeTool(document->Main());
 	TDF_LabelSequence topLevelShapes;
 	shapeTool->GetFreeShapes(topLevelShapes);
@@ -91,11 +90,10 @@ auto read(const std::string& inFile, std::vector<NamedSolid>& namedSolids) -> bo
 	for (Standard_Integer iLabel = 1; iLabel <= topLevelShapes.Length(); ++iLabel) {
 		getNamedSolids(TopLoc_Location{}, "", id, shapeTool, topLevelShapes.Value(iLabel), namedSolids);
 	}
-	return true;
 }
 
-auto write(const std::string& outFile, const std::vector<NamedSolid>& namedSolids, const std::vector<std::string>& names,
-		const double linearDeflection, const double angularDeflection, const std::string& format) -> bool {
+void write(const std::string& outFile, const std::vector<NamedSolid>& namedSolids, const std::vector<std::string>& names,
+		const double linearDeflection, const double angularDeflection, const std::string& format) {
 	TopoDS_Compound compound;
 	TopoDS_Builder builder;
 	builder.MakeCompound(compound);
@@ -105,14 +103,14 @@ auto write(const std::string& outFile, const std::vector<NamedSolid>& namedSolid
 	else {
 		for (const auto& name : names) {
 			const auto iter = std::find_if(std::begin(namedSolids), std::end(namedSolids), [&](const auto& namesSolid) { return namesSolid.name == name; });
-			if (iter == std::end(namedSolids)) std::cout << "Could not find solid with name '" << name << "'" << std::endl;
-			else builder.Add(compound, iter->solid);
+			if (iter == std::end(namedSolids)) throw std::logic_error{std::string{"Could not find solid with name '"} + name + "'"};
+			builder.Add(compound, iter->solid);
 		}
 	}
 	BRepMesh_IncrementalMesh mesh(compound, linearDeflection, (std::acos(-1.0) / 180.0) * angularDeflection, Standard_True);
 	StlAPI_Writer writer;
 	writer.ASCIIMode() = format == "stl_ascii" ? Standard_True : Standard_False;
-	return writer.Write(compound, outFile.c_str()) == Standard_True;
+	if (!writer.Write(compound, outFile.c_str())) throw std::logic_error{std::string{"Could not write '"} + outFile + "'"};
 }
 
 int main(int argc, char* argv[]) {
@@ -132,8 +130,8 @@ int main(int argc, char* argv[]) {
 			if (result.count("in")) {
 				const std::string inFile = result["in"].as<std::string>();
 				std::vector<NamedSolid> namedSolids;
-				if (read(inFile, namedSolids)) for (const auto& namedSolid : namedSolids) std::cout << namedSolid.name << std::endl;
-				else throw std::logic_error{std::string{"Could not read "} + inFile};
+				read(inFile, namedSolids);
+				for (const auto& namedSolid : namedSolids) std::cout << namedSolid.name << std::endl;
 			}
 			else throw std::logic_error{std::string{"Missing option 'in'"}};
 		}
@@ -147,10 +145,8 @@ int main(int argc, char* argv[]) {
 			std::vector<std::string> select;
 			if (result.count("select")) select = result["select"].as<std::vector<std::string>>();
 			std::vector<NamedSolid> namedSolids;
-			if (read(inFile, namedSolids)) {
-				if (!write(outFile, namedSolids, select, linearDeflection, angularDeflection, format)) throw std::logic_error{std::string{"Could not write "} + outFile};
-			}
-			else throw std::logic_error{std::string{"Could not read "} + inFile};
+			read(inFile, namedSolids);
+			write(outFile, namedSolids, select, linearDeflection, angularDeflection, format);
 		}
 		else std::cout << options.help() << std::endl;
 		return EXIT_SUCCESS;
