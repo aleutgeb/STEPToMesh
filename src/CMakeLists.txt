@@ -45,80 +45,106 @@ project (STEPToMesh)
 # begin of configuration section
 # change values according to path structure in OpenCASCADE installation
 #
-set(OPENCASCADE_PREFIX "C:/OpenCASCADE-7.4.0-vc14-64")
-set(OPENCASCADE_BIN_PREFIX "${OPENCASCADE_PREFIX}/opencascade-7.4.0/win64/vc14/bin")
-set(TBB_LIBRARY_PREFIX "${OPENCASCADE_PREFIX}/tbb_2017.0.100/lib/intel64/vc14")
-set(TBB_BIN_PREFIX "${OPENCASCADE_PREFIX}/tbb_2017.0.100/bin/intel64/vc14")
-set(FREEIMAGE_LIBRARY_PREFIX "${OPENCASCADE_PREFIX}/freeimage-3.17.0-vc14-64/lib")
-set(FREEIMAGE_BIN_PREFIX "${OPENCASCADE_PREFIX}/freeimage-3.17.0-vc14-64/bin")
-set(FFMPEG_LIBRARY_PREFIX "${OPENCASCADE_PREFIX}/ffmpeg-3.3.4-64/lib")
-set(FFMPEG_BIN_PREFIX "${OPENCASCADE_PREFIX}/ffmpeg-3.3.4-64/bin")
-set(FREETYPE_LIBRARY_PREFIX "${OPENCASCADE_PREFIX}/freetype-2.5.5-vc14-64/lib")
-set(FREETYPE_BIN_PREFIX "${OPENCASCADE_PREFIX}/freetype-2.5.5-vc14-64/bin")
+set(OPENCASCADE_PREFIX "C:/OpenCASCADE-7.4.0-vc14-64" CACHE PATH "OpenCASCADE prefix")
+if(WIN32)
+	set(CMAKE_INSTALL_BINDIR "." CACHE PATH "User executables (bin)")
+endif()
 #
 # end of configuration section
 #
 
 set(CMAKE_PREFIX_PATH "${OPENCASCADE_PREFIX};${CMAKE_PREFIX_PATH}")
 
-find_package(OpenCASCADE)
+find_package(OpenCASCADE REQUIRED)
+
+if(OpenCASCADE_WITH_TBB)
+	set(TBB_LIBRARY_PREFIX "${OPENCASCADE_PREFIX}/tbb_2017.0.100/lib/intel64/vc14" CACHE PATH "TBB library directory")
+	set(TBB_BIN_PREFIX "${OPENCASCADE_PREFIX}/tbb_2017.0.100/bin/intel64/vc14" CACHE PATH "TBB binary directory")
+endif()
+if(OpenCASCADE_WITH_FREEIMAGE)
+	set(FREEIMAGE_LIBRARY_PREFIX "${OPENCASCADE_PREFIX}/freeimage-3.17.0-vc14-64/lib" CACHE PATH "FreeImage library directory")
+	set(FREEIMAGE_BIN_PREFIX "${OPENCASCADE_PREFIX}/freeimage-3.17.0-vc14-64/bin" CACHE PATH "FreeImage binary directory")
+endif()
+if(OpenCASCADE_WITH_FFMPEG)
+	set(FFMPEG_LIBRARY_PREFIX "${OPENCASCADE_PREFIX}/ffmpeg-3.3.4-64/lib" CACHE PATH "FFmpeg library directory")
+	set(FFMPEG_BIN_PREFIX "${OPENCASCADE_PREFIX}/ffmpeg-3.3.4-64/bin" CACHE PATH "FFmpeg binary directory")
+endif()
+if(OpenCASCADE_WITH_FREETYPE)
+	set(FREETYPE_LIBRARY_PREFIX "${OPENCASCADE_PREFIX}/freetype-2.5.5-vc14-64/lib" CACHE PATH "FreeType library directory")
+	set(FREETYPE_BIN_PREFIX "${OPENCASCADE_PREFIX}/freetype-2.5.5-vc14-64/bin" CACHE PATH "FreeType binary directory")
+endif()
 
 include_directories(${OpenCASCADE_INCLUDE_DIR})
 
 set(LIBS TKernel TKMath TKGeomBase TKTopAlgo TKMesh TKSTEP TKCAF TKXCAF TKSTEPAttr TKSTEP209 TKSTEPBase TKXSBase TKLCAF TKVCAF TKCDF TKBO TKShHealing TKPrim TKGeomAlgo TKBRep TKG2d TKG3d TKService TKV3d TKXDESTEP TKSTL)
 
-#
-# update libraries for imported OpenCASCADE targets (modules),
-# because they have predefined paths from OpenCASCADE build
-#
-update_target_library("${LIBS}" "^.+/tbbmalloc\\\\.lib$" "${TBB_LIBRARY_PREFIX}/tbbmalloc.lib")
-update_target_library("${LIBS}" "^.+/tbb\\\\.lib$" "${TBB_LIBRARY_PREFIX}/tbb.lib")
-update_target_library("${LIBS}" "^.+/FreeImage\\\\.lib$" "${FREEIMAGE_LIBRARY_PREFIX}/FreeImage.lib")
-update_target_library("${LIBS}" "^.+/avcodec\\\\.lib$" "${FFMPEG_LIBRARY_PREFIX}/avcodec.lib")
-update_target_library("${LIBS}" "^.+/avformat\\\\.lib$" "${FFMPEG_LIBRARY_PREFIX}/avformat.lib")
-update_target_library("${LIBS}" "^.+/swscale\\\\.lib$" "${FFMPEG_LIBRARY_PREFIX}/swscale.lib")
-update_target_library("${LIBS}" "^.+/avutil\\\\.lib$" "${FFMPEG_LIBRARY_PREFIX}/avutil.lib")
-update_target_library("${LIBS}" "^.+/freetype\\\\.lib$" "${FREETYPE_LIBRARY_PREFIX}/freetype.lib")
+if(WIN32)
+	#
+	# update libraries for imported OpenCASCADE targets (modules),
+	# because they have predefined paths from OpenCASCADE build
+	#
+	if(OpenCASCADE_WITH_TBB)
+		update_target_library("${LIBS}" "^.+/tbbmalloc\\\\.lib$" "${TBB_LIBRARY_PREFIX}/tbbmalloc.lib")
+		update_target_library("${LIBS}" "^.+/tbb\\\\.lib$" "${TBB_LIBRARY_PREFIX}/tbb.lib")
+	endif()
+	if(OpenCASCADE_WITH_FREEIMAGE)
+		update_target_library("${LIBS}" "^.+/FreeImage\\\\.lib$" "${FREEIMAGE_LIBRARY_PREFIX}/FreeImage.lib")
+	endif()
+	if(OpenCASCADE_WITH_FFMPEG)
+		update_target_library("${LIBS}" "^.+/avcodec\\\\.lib$" "${FFMPEG_LIBRARY_PREFIX}/avcodec.lib")
+		update_target_library("${LIBS}" "^.+/avformat\\\\.lib$" "${FFMPEG_LIBRARY_PREFIX}/avformat.lib")
+		update_target_library("${LIBS}" "^.+/swscale\\\\.lib$" "${FFMPEG_LIBRARY_PREFIX}/swscale.lib")
+		update_target_library("${LIBS}" "^.+/avutil\\\\.lib$" "${FFMPEG_LIBRARY_PREFIX}/avutil.lib")
+	endif()
+	if(OpenCASCADE_WITH_FREETYPE)
+		update_target_library("${LIBS}" "^.+/freetype\\\\.lib$" "${FREETYPE_LIBRARY_PREFIX}/freetype.lib")
+	endif()
+endif()
 
 add_executable(STEPToMesh STEPToMesh.cpp)
 
 target_link_libraries(STEPToMesh ${LIBS})
 
-add_custom_command(TARGET STEPToMesh POST_BUILD
-	COMMAND ${CMAKE_COMMAND} -E copy_if_different
-	"${OPENCASCADE_BIN_PREFIX}/TKBRep.dll"
-	"${OPENCASCADE_BIN_PREFIX}/TKernel.dll"
-	"${OPENCASCADE_BIN_PREFIX}/TKG2d.dll"
-	"${OPENCASCADE_BIN_PREFIX}/TKG3d.dll"
-	"${OPENCASCADE_BIN_PREFIX}/TKGeomAlgo.dll"
-	"${OPENCASCADE_BIN_PREFIX}/TKGeomBase.dll"
-	"${OPENCASCADE_BIN_PREFIX}/TKMath.dll"
-	"${OPENCASCADE_BIN_PREFIX}/TKMesh.dll"
-	"${OPENCASCADE_BIN_PREFIX}/TKShHealing.dll"
-	"${OPENCASCADE_BIN_PREFIX}/TKSTEP.dll"
-	"${OPENCASCADE_BIN_PREFIX}/TKSTEP209.dll"
-	"${OPENCASCADE_BIN_PREFIX}/TKSTEPAttr.dll"
-	"${OPENCASCADE_BIN_PREFIX}/TKSTEPBase.dll"
-	"${OPENCASCADE_BIN_PREFIX}/TKTopAlgo.dll"
-	"${OPENCASCADE_BIN_PREFIX}/TKXSBase.dll"
-	"${OPENCASCADE_BIN_PREFIX}/TKXDESTEP.dll"
-	"${OPENCASCADE_BIN_PREFIX}/TKXCAF.dll"
-	"${OPENCASCADE_BIN_PREFIX}/TKLCAF.dll"
-	"${OPENCASCADE_BIN_PREFIX}/TKVCAF.dll"
-	"${OPENCASCADE_BIN_PREFIX}/TKV3d.dll"
-	"${OPENCASCADE_BIN_PREFIX}/TKCAF.dll"
-	"${OPENCASCADE_BIN_PREFIX}/TKCDF.dll"
-	"${OPENCASCADE_BIN_PREFIX}/TKBO.dll"
-	"${OPENCASCADE_BIN_PREFIX}/TKService.dll"
-	"${OPENCASCADE_BIN_PREFIX}/TKHLR.dll"
-	"${OPENCASCADE_BIN_PREFIX}/TKPrim.dll"
-	"${OPENCASCADE_BIN_PREFIX}/TKSTL.dll"
-	"${TBB_BIN_PREFIX}/tbb.dll"
-	"${TBB_BIN_PREFIX}/tbbmalloc.dll"
-	"${FREEIMAGE_BIN_PREFIX}/FreeImage.dll"
-	"${FREETYPE_BIN_PREFIX}/freetype.dll"
-	"${FFMPEG_BIN_PREFIX}/avcodec-57.dll"
-	"${FFMPEG_BIN_PREFIX}/avformat-57.dll"
-	"${FFMPEG_BIN_PREFIX}/swscale-4.dll"
-	"${FFMPEG_BIN_PREFIX}/avutil-55.dll"
-	$<TARGET_FILE_DIR:STEPToMesh>)
+include(GNUInstallDirs)
+
+install(TARGETS STEPToMesh)
+
+if(WIN32)
+	option(INSTALL_DEPENDENCIES "whether to install dependent libraries or not" ON)
+else()
+	option(INSTALL_DEPENDENCIES "whether to install dependent libraries or not" OFF)
+endif()
+
+if(INSTALL_DEPENDENCIES)
+	if(WIN32)
+		foreach(LIB ${LIBS} TKHLR)
+			# installing imported targets as TARGETS is not possible (see https://gitlab.kitware.com/cmake/cmake/-/issues/14311)
+			# so we must use FILES mode
+			install(FILES $<TARGET_FILE:${LIB}> TYPE BIN)
+		endforeach()
+		if(OpenCASCADE_WITH_TBB)
+			install(FILES 
+				"${TBB_BIN_PREFIX}/tbb.dll"
+				"${TBB_BIN_PREFIX}/tbbmalloc.dll"
+				TYPE BIN)
+		endif()
+		if(OpenCASCADE_WITH_FREEIMAGE)
+			install(FILES 
+				"${FREEIMAGE_BIN_PREFIX}/FreeImage.dll"
+				TYPE BIN)
+		endif()
+		if(OpenCASCADE_WITH_FREETYPE)
+			install(FILES 
+				"${FREETYPE_BIN_PREFIX}/freetype.dll"
+				TYPE BIN)
+		endif()
+		if(OpenCASCADE_WITH_FFMPEG)
+			install(FILES 
+				"${FFMPEG_BIN_PREFIX}/avcodec-57.dll"
+				"${FFMPEG_BIN_PREFIX}/avformat-57.dll"
+				"${FFMPEG_BIN_PREFIX}/swscale-4.dll"
+				"${FFMPEG_BIN_PREFIX}/avutil-55.dll"
+				TYPE BIN)
+		endif()
+	endif()
+endif()
