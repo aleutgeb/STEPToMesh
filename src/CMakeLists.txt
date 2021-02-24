@@ -45,7 +45,7 @@ project (STEPToMesh)
 # begin of configuration section
 # change values according to path structure in OpenCASCADE installation
 #
-set(OPENCASCADE_PREFIX "C:/OpenCASCADE-7.4.0-vc14-64" CACHE PATH "OpenCASCADE prefix")
+set(OPENCASCADE_PREFIX "C:/OpenCASCADE-7.5.0-vc14-64" CACHE PATH "OpenCASCADE prefix")
 if(WIN32)
 	set(CMAKE_INSTALL_BINDIR "." CACHE PATH "User executables (bin)")
 endif()
@@ -74,6 +74,14 @@ if(OpenCASCADE_WITH_FREETYPE)
 	set(FREETYPE_BIN_PREFIX "${OPENCASCADE_PREFIX}/freetype-2.5.5-vc14-64/bin" CACHE PATH "FreeType binary directory")
 endif()
 
+# OpenCASCADE-config.cmake doesn't define this option yet, so define it here instead
+option(OpenCASCADE_WITH_OPENVR "whether OpenCASCADE was built with OpenVR support" ON)
+
+if(OpenCASCADE_WITH_OPENVR)
+	set(OPENVR_LIBRARY_PREFIX "${OPENCASCADE_PREFIX}/openvr-1.14.15-64/lib/win64" CACHE PATH "OpenVR library directory")
+	set(OPENVR_BIN_PREFIX "${OPENCASCADE_PREFIX}/openvr-1.14.15-64/bin/win64" CACHE PATH "OpenVR binary directory")
+endif()
+
 include_directories(${OpenCASCADE_INCLUDE_DIR})
 
 set(LIBS TKernel TKMath TKGeomBase TKTopAlgo TKMesh TKSTEP TKCAF TKXCAF TKSTEPAttr TKSTEP209 TKSTEPBase TKXSBase TKLCAF TKVCAF TKCDF TKBO TKShHealing TKPrim TKGeomAlgo TKBRep TKG2d TKG3d TKService TKV3d TKXDESTEP TKSTL)
@@ -98,6 +106,9 @@ if(WIN32)
 	endif()
 	if(OpenCASCADE_WITH_FREETYPE)
 		update_target_library("${LIBS}" "^.+/freetype\\\\.lib$" "${FREETYPE_LIBRARY_PREFIX}/freetype.lib")
+	endif()
+	if(OpenCASCADE_WITH_OPENVR)
+		update_target_library("${LIBS}" "^.+/openvr_api\\\\.lib$" "${OPENVR_LIBRARY_PREFIX}/openvr_api.lib")
 	endif()
 endif()
 
@@ -144,6 +155,11 @@ if(INSTALL_DEPENDENCIES)
 				"${FFMPEG_BIN_PREFIX}/avformat-57.dll"
 				"${FFMPEG_BIN_PREFIX}/swscale-4.dll"
 				"${FFMPEG_BIN_PREFIX}/avutil-55.dll"
+				TYPE BIN)
+		endif()
+		if(OpenCASCADE_WITH_OPENVR)
+			install(FILES 
+				"${OPENVR_BIN_PREFIX}/openvr_api.dll"
 				TYPE BIN)
 		endif()
 	endif()
