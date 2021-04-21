@@ -55,7 +55,8 @@ endif()
 
 set(CMAKE_PREFIX_PATH "${OPENCASCADE_PREFIX};${CMAKE_PREFIX_PATH}")
 
-find_package(OpenCASCADE REQUIRED)
+find_package(OpenCASCADE)
+find_package(OCE)
 
 if(OpenCASCADE_WITH_TBB)
 	set(TBB_LIBRARY_PREFIX "${OPENCASCADE_PREFIX}/tbb_2017.0.100/lib/intel64/vc14" CACHE PATH "TBB library directory")
@@ -74,7 +75,7 @@ if(OpenCASCADE_WITH_FREETYPE)
 	set(FREETYPE_BIN_PREFIX "${OPENCASCADE_PREFIX}/freetype-2.5.5-vc14-64/bin" CACHE PATH "FreeType binary directory")
 endif()
 
-include_directories(${OpenCASCADE_INCLUDE_DIR})
+include_directories(${OpenCASCADE_INCLUDE_DIR} ${OCE_INCLUDE_DIRS})
 
 set(LIBS TKernel TKMath TKBRep TKLCAF TKXDESTEP TKSTL)
 

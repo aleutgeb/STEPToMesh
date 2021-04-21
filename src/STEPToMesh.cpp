@@ -32,6 +32,7 @@
 #include <XCAFDoc_ShapeTool.hxx>
 #include <TDocStd_Document.hxx>
 #include <TDF_ChildIterator.hxx>
+#include <TDF_LabelSequence.hxx>
 #include <TDataStd_Name.hxx>
 #include <BRepMesh_IncrementalMesh.hxx>
 #include <BRepBuilderAPI_Transform.hxx>
