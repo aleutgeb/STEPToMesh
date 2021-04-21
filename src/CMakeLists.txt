@@ -76,7 +76,7 @@ endif()
 
 include_directories(${OpenCASCADE_INCLUDE_DIR})
 
-set(LIBS TKernel TKMath TKGeomBase TKTopAlgo TKMesh TKSTEP TKCAF TKXCAF TKSTEPAttr TKSTEP209 TKSTEPBase TKXSBase TKLCAF TKVCAF TKCDF TKBO TKShHealing TKPrim TKGeomAlgo TKBRep TKG2d TKG3d TKService TKV3d TKXDESTEP TKSTL)
+set(LIBS TKernel TKMath TKBRep TKLCAF TKXDESTEP TKSTL)
 
 if(WIN32)
 	#
@@ -117,7 +117,7 @@ endif()
 
 if(INSTALL_DEPENDENCIES)
 	if(WIN32)
-		foreach(LIB ${LIBS} TKHLR)
+		foreach(LIB ${LIBS} TKXCAF TKMesh TKTopAlgo TKSTEP TKSTEPAttr TKSTEPBase TKXSBase TKShHealing TKG3d TKSTEP209 TKVCAF TKV3d TKService TKCAF TKCDF TKGeomBase TKHLR TKBO TKPrim TKGeomAlgo TKG2d)
 			# installing imported targets as TARGETS is not possible (see https://gitlab.kitware.com/cmake/cmake/-/issues/14311)
 			# so we must use FILES mode
 			install(FILES $<TARGET_FILE:${LIB}> TYPE BIN)
