@@ -65,19 +65,37 @@ endif()
 if(OpenCASCADE_WITH_FREEIMAGE)
 	set(FREEIMAGE_LIBRARY_PREFIX "${OPENCASCADE_PREFIX}/freeimage-3.17.0-vc14-64/lib" CACHE PATH "FreeImage library directory")
 	set(FREEIMAGE_BIN_PREFIX "${OPENCASCADE_PREFIX}/freeimage-3.17.0-vc14-64/bin" CACHE PATH "FreeImage binary directory")
+	option(FREEIMAGE_SHARED "link FreeImage as shared library" ON)
 endif()
 if(OpenCASCADE_WITH_FFMPEG)
 	set(FFMPEG_LIBRARY_PREFIX "${OPENCASCADE_PREFIX}/ffmpeg-3.3.4-64/lib" CACHE PATH "FFmpeg library directory")
 	set(FFMPEG_BIN_PREFIX "${OPENCASCADE_PREFIX}/ffmpeg-3.3.4-64/bin" CACHE PATH "FFmpeg binary directory")
+	option(FFMPEG_SHARED "link FFmpeg as shared libraries" ON)
 endif()
 if(OpenCASCADE_WITH_FREETYPE)
 	set(FREETYPE_LIBRARY_PREFIX "${OPENCASCADE_PREFIX}/freetype-2.5.5-vc14-64/lib" CACHE PATH "FreeType library directory")
 	set(FREETYPE_BIN_PREFIX "${OPENCASCADE_PREFIX}/freetype-2.5.5-vc14-64/bin" CACHE PATH "FreeType binary directory")
+	option(FREETYPE_SHARED "link FreeType as shared library" ON)
 endif()
 
 include_directories(${OpenCASCADE_INCLUDE_DIR} ${OCE_INCLUDE_DIRS})
 
-set(LIBS TKernel TKMath TKBRep TKLCAF TKXDESTEP TKSTL)
+if(NOT OpenCASCADE_BUILD_SHARED_LIBS)
+	if(OpenCASCADE_WITH_TBB)
+		link_directories(${TBB_LIBRARY_PREFIX})
+	endif()
+	if(OpenCASCADE_WITH_FREEIMAGE)
+		link_directories(${FREEIMAGE_LIBRARY_PREFIX})
+	endif()
+	if(OpenCASCADE_WITH_FFMPEG)
+		link_directories(${FFMPEG_LIBRARY_PREFIX})
+	endif()
+	if(OpenCASCADE_WITH_FREETYPE)
+		link_directories(${FREETYPE_LIBRARY_PREFIX})
+	endif()
+endif()
+
+set(LIBS TKernel TKMath TKBRep TKLCAF TKXDESTEP TKXCAF TKMesh TKTopAlgo TKSTL TKG3d TKG2d TKGeomBase TKCDF TKXSBase TKSTEP TKSTEPBase TKSTEPAttr TKShHealing TKVCAF TKCAF TKService TKV3d TKGeomAlgo TKSTEP209 TKBO TKHLR)
 
 if(WIN32)
 	#
@@ -118,28 +136,30 @@ endif()
 
 if(INSTALL_DEPENDENCIES)
 	if(WIN32)
-		foreach(LIB ${LIBS} TKXCAF TKMesh TKTopAlgo TKSTEP TKSTEPAttr TKSTEPBase TKXSBase TKShHealing TKG3d TKSTEP209 TKVCAF TKV3d TKService TKCAF TKCDF TKGeomBase TKHLR TKBO TKPrim TKGeomAlgo TKG2d)
-			# installing imported targets as TARGETS is not possible (see https://gitlab.kitware.com/cmake/cmake/-/issues/14311)
-			# so we must use FILES mode
-			install(FILES $<TARGET_FILE:${LIB}> TYPE BIN)
-		endforeach()
+		if(OpenCASCADE_BUILD_SHARED_LIBS)
+			foreach(LIB ${LIBS} TKPrim)
+				# installing imported targets as TARGETS is not possible (see https://gitlab.kitware.com/cmake/cmake/-/issues/14311)
+				# so we must use FILES mode
+				install(FILES $<TARGET_FILE:${LIB}> TYPE BIN)
+			endforeach()
+		endif()
 		if(OpenCASCADE_WITH_TBB)
 			install(FILES 
 				"${TBB_BIN_PREFIX}/tbb.dll"
 				"${TBB_BIN_PREFIX}/tbbmalloc.dll"
 				TYPE BIN)
 		endif()
-		if(OpenCASCADE_WITH_FREEIMAGE)
+		if(OpenCASCADE_WITH_FREEIMAGE AND FREEIMAGE_SHARED)
 			install(FILES 
 				"${FREEIMAGE_BIN_PREFIX}/FreeImage.dll"
 				TYPE BIN)
 		endif()
-		if(OpenCASCADE_WITH_FREETYPE)
+		if(OpenCASCADE_WITH_FREETYPE AND FREETYPE_SHARED)
 			install(FILES 
 				"${FREETYPE_BIN_PREFIX}/freetype.dll"
 				TYPE BIN)
 		endif()
-		if(OpenCASCADE_WITH_FFMPEG)
+		if(OpenCASCADE_WITH_FFMPEG AND FFMPEG_SHARED)
 			install(FILES 
 				"${FFMPEG_BIN_PREFIX}/avcodec-57.dll"
 				"${FFMPEG_BIN_PREFIX}/avformat-57.dll"
