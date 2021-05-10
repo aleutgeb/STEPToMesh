@@ -108,7 +108,7 @@ void write(const std::string& outFile, const std::vector<NamedSolid>& namedSolid
 			builder.Add(compound, iter->solid);
 		}
 	}
-	BRepMesh_IncrementalMesh mesh(compound, linearDeflection, (std::acos(-1.0) / 180.0) * angularDeflection, Standard_True);
+	BRepMesh_IncrementalMesh mesh(compound, linearDeflection, Standard_False, (std::acos(-1.0) / 180.0) * angularDeflection, Standard_True);
 	StlAPI_Writer writer;
 	writer.ASCIIMode() = format == "stl_ascii" ? Standard_True : Standard_False;
 	if (!writer.Write(compound, outFile.c_str())) throw std::logic_error{std::string{"Could not write '"} + outFile + "'"};
