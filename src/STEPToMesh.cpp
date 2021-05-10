@@ -153,7 +153,7 @@ int main(int argc, char* argv[]) {
 		return EXIT_SUCCESS;
 	}
 	catch (const std::exception& ex) {
-		std::cout << ex.what();
+		std::cerr << ex.what();
 		return EXIT_FAILURE;
 	}
 }
