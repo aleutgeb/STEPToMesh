@@ -86,6 +86,7 @@ option(OpenCASCADE_WITH_OPENVR "whether OpenCASCADE was built with OpenVR suppor
 if(OpenCASCADE_WITH_OPENVR)
 	set(OPENVR_LIBRARY_PREFIX "${OPENCASCADE_PREFIX}/openvr-1.14.15-64/lib/win64" CACHE PATH "OpenVR library directory")
 	set(OPENVR_BIN_PREFIX "${OPENCASCADE_PREFIX}/openvr-1.14.15-64/bin/win64" CACHE PATH "OpenVR binary directory")
+	option(OPENVR_SHARED "link OpenVR as shared library" ON)
 endif()
 
 if(NOT OpenCASCADE_BUILD_SHARED_LIBS)
@@ -100,6 +101,9 @@ if(NOT OpenCASCADE_BUILD_SHARED_LIBS)
 	endif()
 	if(OpenCASCADE_WITH_FREETYPE)
 		link_directories(${FREETYPE_LIBRARY_PREFIX})
+	endif()
+	if(OpenCASCADE_WITH_OPENVR)
+		link_directories(${OPENVR_LIBRARY_PREFIX})
 	endif()
 endif()
 
@@ -178,7 +182,7 @@ if(INSTALL_DEPENDENCIES)
 				"${FFMPEG_BIN_PREFIX}/avutil-55.dll"
 				TYPE BIN)
 		endif()
-		if(OpenCASCADE_WITH_OPENVR)
+		if(OpenCASCADE_WITH_OPENVR AND OPENVR_SHARED)
 			install(FILES 
 				"${OPENVR_BIN_PREFIX}/openvr_api.dll"
 				TYPE BIN)
