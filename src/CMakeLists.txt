@@ -78,8 +78,6 @@ if(OpenCASCADE_WITH_FREETYPE)
 	option(FREETYPE_SHARED "link FreeType as shared library" ON)
 endif()
 
-include_directories(${OpenCASCADE_INCLUDE_DIR} ${OCE_INCLUDE_DIRS})
-
 # OpenCASCADE-config.cmake doesn't define this option yet, so define it here instead
 option(OpenCASCADE_WITH_OPENVR "whether OpenCASCADE was built with OpenVR support" ON)
 
@@ -88,6 +86,8 @@ if(OpenCASCADE_WITH_OPENVR)
 	set(OPENVR_BIN_PREFIX "${OPENCASCADE_PREFIX}/openvr-1.14.15-64/bin/win64" CACHE PATH "OpenVR binary directory")
 	option(OPENVR_SHARED "link OpenVR as shared library" ON)
 endif()
+
+include_directories(${OpenCASCADE_INCLUDE_DIR} ${OCE_INCLUDE_DIRS})
 
 if(NOT OpenCASCADE_BUILD_SHARED_LIBS)
 	if(OpenCASCADE_WITH_TBB)
