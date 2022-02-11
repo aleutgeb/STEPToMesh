@@ -37,7 +37,7 @@ Usage:
   -f, --format arg   Output file format (stl_bin or stl_ascii) (default:
                      stl_bin)
   -c, --content      List content (solids)
-  -s, --select arg   Select solids by name (comma seperated list)
+  -s, --select arg   Select solids by name or index (comma seperated list, index starts with 1)
   -l, --linear arg   Linear deflection
   -a, --angular arg  Angular deflection (degrees)
   -h, --help         Print usage

@@ -93,19 +93,33 @@ void read(const std::string& inFile, std::vector<NamedSolid>& namedSolids) {
 	}
 }
 
-void write(const std::string& outFile, const std::vector<NamedSolid>& namedSolids, const std::vector<std::string>& names,
+void write(const std::string& outFile, const std::vector<NamedSolid>& namedSolids, const std::vector<std::string>& select,
 		const double linearDeflection, const double angularDeflection, const std::string& format) {
 	TopoDS_Compound compound;
 	TopoDS_Builder builder;
 	builder.MakeCompound(compound);
-	if (names.empty()) {
+	if (select.empty()) {
 		for (const auto& namedSolid : namedSolids) builder.Add(compound, namedSolid.solid);
 	}
 	else {
-		for (const auto& name : names) {
-			const auto iter = std::find_if(std::begin(namedSolids), std::end(namedSolids), [&](const auto& namesSolid) { return namesSolid.name == name; });
-			if (iter == std::end(namedSolids)) throw std::logic_error{std::string{"Could not find solid with name '"} + name + "'"};
-			builder.Add(compound, iter->solid);
+		for (const auto& sel : select) {
+			if (sel != "") {
+				if (sel[0] == '/') {
+					const auto iter = std::find_if(std::begin(namedSolids), std::end(namedSolids), [&](const auto& namesSolid) { return namesSolid.name == sel; });
+					if (iter == std::end(namedSolids)) throw std::logic_error{std::string{"Could not find solid with name '"} + sel + "'"};
+					builder.Add(compound, iter->solid);
+				}
+				else {
+					try {
+						int index{std::stoi(sel)};
+						if (index < 1 || index > namedSolids.size()) throw std::logic_error{std::string{"Index out of range: "} + sel};
+						builder.Add(compound, namedSolids[index - 1].solid);
+					}
+					catch (const std::invalid_argument&) {
+						throw std::logic_error{std::string("Invalid index: ") + sel};
+					}
+				}
+			}
 		}
 	}
 	BRepMesh_IncrementalMesh mesh(compound, linearDeflection, Standard_False, (std::acos(-1.0) / 180.0) * angularDeflection, Standard_True);
@@ -121,7 +135,7 @@ int main(int argc, char* argv[]) {
 			("o,out", "Output file", cxxopts::value<std::string>())
 			("f,format", "Output file format (stl_bin or stl_ascii)", cxxopts::value<std::string>()->default_value("stl_bin"))
 			("c,content", "List content (solids)")
-			("s,select", "Select solids by name (comma seperated list)", cxxopts::value<std::vector<std::string>>())
+			("s,select", "Select solids by name or index (comma seperated list, index starts with 1)", cxxopts::value<std::vector<std::string>>())
 			("l,linear", "Linear deflection", cxxopts::value<double>())
 			("a,angular", "Angular deflection (degrees)", cxxopts::value<double>())
 			("h,help", "Print usage");
