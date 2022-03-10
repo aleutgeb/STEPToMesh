@@ -37,6 +37,7 @@
 #include <BRepMesh_IncrementalMesh.hxx>
 #include <BRepBuilderAPI_Transform.hxx>
 #include <StlAPI_Writer.hxx>
+#include <Interface_Static.hxx>
 #include <vector>
 #include <cmath>
 #include <iostream>
@@ -76,12 +77,13 @@ void getNamedSolids(const TopLoc_Location& location, const std::string& prefix, 
 	}
 }
 
-void read(const std::string& inFile, std::vector<NamedSolid>& namedSolids) {
+void read(const std::string& inFile, const std::string& unit, std::vector<NamedSolid>& namedSolids) {
 	Handle(TDocStd_Document) document;
 	Handle(XCAFApp_Application) application = XCAFApp_Application::GetApplication();
 	application->NewDocument(inFile.c_str(), document);
 	STEPCAFControl_Reader reader;
 	reader.SetNameMode(true);
+	if (!Interface_Static::SetCVal("xstep.cascade.unit", unit.c_str())) throw std::logic_error{ std::string{"Could not set unit '"} + unit + "'" };
 	IFSelect_ReturnStatus stat = reader.ReadFile(inFile.c_str());
 	if (stat != IFSelect_RetDone || !reader.Transfer(document)) throw std::logic_error{std::string{"Could not read '"} + inFile + "'"};
 	Handle(XCAFDoc_ShapeTool) shapeTool = XCAFDoc_DocumentTool::ShapeTool(document->Main());
@@ -128,6 +130,11 @@ void write(const std::string& outFile, const std::vector<NamedSolid>& namedSolid
 	if (!writer.Write(compound, outFile.c_str())) throw std::logic_error{std::string{"Could not write '"} + outFile + "'"};
 }
 
+std::string str_toupper(std::string s) {
+	std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) { return std::toupper(c); } );
+	return s;
+}
+
 int main(int argc, char* argv[]) {
 	cxxopts::Options options{"STEPToMesh", "STEP to triangle mesh conversion"};
 	options.add_options()
@@ -138,6 +145,7 @@ int main(int argc, char* argv[]) {
 			("s,select", "Select solids by name or index (comma seperated list, index starts with 1)", cxxopts::value<std::vector<std::string>>())
 			("l,linear", "Linear deflection", cxxopts::value<double>())
 			("a,angular", "Angular deflection (degrees)", cxxopts::value<double>())
+			("u,unit", "Output unit (default mm)", cxxopts::value<std::string>()->default_value("MM"))
 			("h,help", "Print usage");
 	try {
 		const auto result = options.parse(argc, argv);
@@ -145,7 +153,7 @@ int main(int argc, char* argv[]) {
 			if (result.count("in")) {
 				const std::string inFile = result["in"].as<std::string>();
 				std::vector<NamedSolid> namedSolids;
-				read(inFile, namedSolids);
+				read(inFile, "MM", namedSolids);
 				for (const auto& namedSolid : namedSolids) std::cout << namedSolid.name << std::endl;
 			}
 			else throw std::logic_error{std::string{"Missing option 'in'"}};
@@ -160,7 +168,8 @@ int main(int argc, char* argv[]) {
 			std::vector<std::string> select;
 			if (result.count("select")) select = result["select"].as<std::vector<std::string>>();
 			std::vector<NamedSolid> namedSolids;
-			read(inFile, namedSolids);
+			const auto unit{str_toupper(result["unit"].as<std::string>())};
+			read(inFile, unit, namedSolids);
 			write(outFile, namedSolids, select, linearDeflection, angularDeflection, format);
 		}
 		else std::cout << options.help() << std::endl;
