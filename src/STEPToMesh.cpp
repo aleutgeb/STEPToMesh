@@ -83,7 +83,7 @@ void read(const std::string& inFile, const std::string& unit, std::vector<NamedS
 	application->NewDocument(inFile.c_str(), document);
 	STEPCAFControl_Reader reader;
 	reader.SetNameMode(true);
-	if (!Interface_Static::SetCVal("xstep.cascade.unit", unit.c_str())) throw std::logic_error{ std::string{"Could not set unit '"} + unit + "'" };
+	if (!Interface_Static::SetCVal("xstep.cascade.unit", unit.c_str())) throw std::logic_error{std::string{"Could not set unit '"} + unit + "'"};
 	IFSelect_ReturnStatus stat = reader.ReadFile(inFile.c_str());
 	if (stat != IFSelect_RetDone || !reader.Transfer(document)) throw std::logic_error{std::string{"Could not read '"} + inFile + "'"};
 	Handle(XCAFDoc_ShapeTool) shapeTool = XCAFDoc_DocumentTool::ShapeTool(document->Main());
