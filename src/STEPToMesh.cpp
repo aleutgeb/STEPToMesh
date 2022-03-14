@@ -37,6 +37,7 @@
 #include <BRepMesh_IncrementalMesh.hxx>
 #include <BRepBuilderAPI_Transform.hxx>
 #include <StlAPI_Writer.hxx>
+#include <XSAlgo.hxx>
 #include <Interface_Static.hxx>
 #include <vector>
 #include <cmath>
@@ -77,13 +78,12 @@ void getNamedSolids(const TopLoc_Location& location, const std::string& prefix, 
 	}
 }
 
-void read(const std::string& inFile, const std::string& unit, std::vector<NamedSolid>& namedSolids) {
+void read(const std::string& inFile, std::vector<NamedSolid>& namedSolids) {
 	Handle(TDocStd_Document) document;
 	Handle(XCAFApp_Application) application = XCAFApp_Application::GetApplication();
 	application->NewDocument(inFile.c_str(), document);
 	STEPCAFControl_Reader reader;
 	reader.SetNameMode(true);
-	if (!Interface_Static::SetCVal("xstep.cascade.unit", unit.c_str())) throw std::logic_error{std::string{"Could not set unit '"} + unit + "'"};
 	IFSelect_ReturnStatus stat = reader.ReadFile(inFile.c_str());
 	if (stat != IFSelect_RetDone || !reader.Transfer(document)) throw std::logic_error{std::string{"Could not read '"} + inFile + "'"};
 	Handle(XCAFDoc_ShapeTool) shapeTool = XCAFDoc_DocumentTool::ShapeTool(document->Main());
@@ -136,24 +136,39 @@ std::string str_toupper(std::string s) {
 }
 
 int main(int argc, char* argv[]) {
+	XSAlgo::Init();
+	Standard_Integer unitsStart, unitsEnd;
+	Standard_Boolean unitsMatch;
+	auto units{Interface_Static::Static("xstep.cascade.unit")};
+	units->EnumDef(unitsStart, unitsEnd, unitsMatch);
+	std::string unitDesc{"Output unit (one of "};
+	for (auto i = unitsStart; i <= unitsEnd; i++) {
+		if (i > unitsStart) unitDesc += ", ";
+		unitDesc += units->EnumVal(i);
+	}
+	unitDesc += ")";
 	cxxopts::Options options{"STEPToMesh", "STEP to triangle mesh conversion"};
 	options.add_options()
 			("i,in", "Input file", cxxopts::value<std::string>())
 			("o,out", "Output file", cxxopts::value<std::string>())
 			("f,format", "Output file format (stl_bin or stl_ascii)", cxxopts::value<std::string>()->default_value("stl_bin"))
 			("c,content", "List content (solids)")
-			("s,select", "Select solids by name or index (comma seperated list, index starts with 1)", cxxopts::value<std::vector<std::string>>())
+			("s,select", "Select solids by name or index (comma separated list, index starts with 1)", cxxopts::value<std::vector<std::string>>())
 			("l,linear", "Linear deflection", cxxopts::value<double>())
 			("a,angular", "Angular deflection (degrees)", cxxopts::value<double>())
-			("u,unit", "Output unit (default mm)", cxxopts::value<std::string>()->default_value("MM"))
+			("u,unit", unitDesc, cxxopts::value<std::string>()->default_value("MM"))
 			("h,help", "Print usage");
 	try {
 		const auto result = options.parse(argc, argv);
+		if (result.count("unit")) {
+			const auto unit{str_toupper(result["unit"].as<std::string>())};
+			if (!units->SetCStringValue(unit.c_str())) throw std::logic_error{std::string{"Could not set unit '"} + unit + "'"};
+		}
 		if (result.count("content")) {
 			if (result.count("in")) {
 				const std::string inFile = result["in"].as<std::string>();
 				std::vector<NamedSolid> namedSolids;
-				read(inFile, "MM", namedSolids);
+				read(inFile, namedSolids);
 				for (const auto& namedSolid : namedSolids) std::cout << namedSolid.name << std::endl;
 			}
 			else throw std::logic_error{std::string{"Missing option 'in'"}};
@@ -168,8 +183,7 @@ int main(int argc, char* argv[]) {
 			std::vector<std::string> select;
 			if (result.count("select")) select = result["select"].as<std::vector<std::string>>();
 			std::vector<NamedSolid> namedSolids;
-			const auto unit{str_toupper(result["unit"].as<std::string>())};
-			read(inFile, unit, namedSolids);
+			read(inFile, namedSolids);
 			write(outFile, namedSolids, select, linearDeflection, angularDeflection, format);
 		}
 		else std::cout << options.help() << std::endl;
