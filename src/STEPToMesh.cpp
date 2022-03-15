@@ -37,6 +37,8 @@
 #include <BRepMesh_IncrementalMesh.hxx>
 #include <BRepBuilderAPI_Transform.hxx>
 #include <StlAPI_Writer.hxx>
+#include <XSAlgo.hxx>
+#include <Interface_Static.hxx>
 #include <vector>
 #include <cmath>
 #include <iostream>
@@ -128,19 +130,40 @@ void write(const std::string& outFile, const std::vector<NamedSolid>& namedSolid
 	if (!writer.Write(compound, outFile.c_str())) throw std::logic_error{std::string{"Could not write '"} + outFile + "'"};
 }
 
+std::string str_toupper(std::string s) {
+	std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) { return std::toupper(c); } );
+	return s;
+}
+
 int main(int argc, char* argv[]) {
+	XSAlgo::Init();
+	Standard_Integer unitsStart, unitsEnd;
+	Standard_Boolean unitsMatch;
+	auto units{Interface_Static::Static("xstep.cascade.unit")};
+	units->EnumDef(unitsStart, unitsEnd, unitsMatch);
+	std::string unitDesc{"Output unit (one of "};
+	for (auto i = unitsStart; i <= unitsEnd; i++) {
+		if (i > unitsStart) unitDesc += ", ";
+		unitDesc += units->EnumVal(i);
+	}
+	unitDesc += ")";
 	cxxopts::Options options{"STEPToMesh", "STEP to triangle mesh conversion"};
 	options.add_options()
 			("i,in", "Input file", cxxopts::value<std::string>())
 			("o,out", "Output file", cxxopts::value<std::string>())
 			("f,format", "Output file format (stl_bin or stl_ascii)", cxxopts::value<std::string>()->default_value("stl_bin"))
 			("c,content", "List content (solids)")
-			("s,select", "Select solids by name or index (comma seperated list, index starts with 1)", cxxopts::value<std::vector<std::string>>())
-			("l,linear", "Linear deflection", cxxopts::value<double>())
+			("s,select", "Select solids by name or index (comma separated list, index starts with 1)", cxxopts::value<std::vector<std::string>>())
+			("l,linear", "Linear deflection (in the unit given by --unit)", cxxopts::value<double>())
 			("a,angular", "Angular deflection (degrees)", cxxopts::value<double>())
+			("u,unit", unitDesc, cxxopts::value<std::string>()->default_value("MM"))
 			("h,help", "Print usage");
 	try {
 		const auto result = options.parse(argc, argv);
+		if (result.count("unit")) {
+			const auto unit{str_toupper(result["unit"].as<std::string>())};
+			if (!units->SetCStringValue(unit.c_str())) throw std::logic_error{std::string{"Could not set unit '"} + unit + "'"};
+		}
 		if (result.count("content")) {
 			if (result.count("in")) {
 				const std::string inFile = result["in"].as<std::string>();
