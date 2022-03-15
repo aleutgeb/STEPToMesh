@@ -154,7 +154,7 @@ int main(int argc, char* argv[]) {
 			("f,format", "Output file format (stl_bin or stl_ascii)", cxxopts::value<std::string>()->default_value("stl_bin"))
 			("c,content", "List content (solids)")
 			("s,select", "Select solids by name or index (comma separated list, index starts with 1)", cxxopts::value<std::vector<std::string>>())
-			("l,linear", "Linear deflection", cxxopts::value<double>())
+			("l,linear", "Linear deflection (in the unit given by --unit)", cxxopts::value<double>())
 			("a,angular", "Angular deflection (degrees)", cxxopts::value<double>())
 			("u,unit", unitDesc, cxxopts::value<std::string>()->default_value("MM"))
 			("h,help", "Print usage");
